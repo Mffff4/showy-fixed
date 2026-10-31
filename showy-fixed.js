@@ -25,6 +25,8 @@
     stop: function () { showyForaging = false; },
     forage: function () { try { showyForage(); } catch (e) {} },
     authHost: SHOWY_AUTH_HOST,
+    ensure: function (cb) { try { showyEnsureProAuth(cb); } catch (e) { if (window.console) console.log('ensure err', e); } },
+    verifyAuth: function (cb) { try { showyVerifyProAuthWithRetry(cb, function(){cb&&cb('invalid')}, function(){cb&&cb('expired')}, function(){cb&&cb('reserve')}, function(){cb&&cb('inactive')}, function(){cb&&cb('temp')}); } catch (e) { if (window.console) console.log('verifyAuth err', e); } },
     verify: function (t) { try { showyVerifyToken(t); } catch (e) { if (window.console) console.log('verify err', e); } },
     rotate: function () { try { showyRotateToken(); } catch (e) {} }
   };
