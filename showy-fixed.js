@@ -4112,6 +4112,12 @@ function showSubscribePROModal() {
 
     paint();
     timer = setInterval(paint, 1000);
+
+    // при открытии сразу показываем реальное состояние пула
+    setTimeout(function () {
+      var b = html.querySelector('#shp-check');
+      if (b) b.onclick();
+    }, 400);
   }
 
   // пункт в настройках
