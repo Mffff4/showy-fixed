@@ -4099,6 +4099,7 @@ function showSubscribePROModal() {
   }
 
   // пункт в настройках
+  try { window.__showyOpenPanel = showyOpenPanel; } catch (e) {}
   setTimeout(function () {
     try {
       if (!Lampa.SettingsApi || !Lampa.SettingsApi.addComponent) return;
