@@ -28,7 +28,14 @@
     ensure: function (cb) { try { showyEnsureProAuth(cb); } catch (e) { if (window.console) console.log('ensure err', e); } },
     verifyAuth: function (cb) { try { showyVerifyProAuthWithRetry(cb, function(){cb&&cb('invalid')}, function(){cb&&cb('expired')}, function(){cb&&cb('reserve')}, function(){cb&&cb('inactive')}, function(){cb&&cb('temp')}); } catch (e) { if (window.console) console.log('verifyAuth err', e); } },
     verify: function (t) { try { showyVerifyToken(t); } catch (e) { if (window.console) console.log('verify err', e); } },
-    rotate: function () { try { showyRotateToken(); } catch (e) {} }
+    rotate: function () { try { showyRotateToken(); } catch (e) {} },
+    forget: function (t) {
+      try {
+        var i = SHOWY_TOKEN_POOL.indexOf(t);
+        if (i >= 0 && SHOWY_TOKEN_POOL.length > 1) SHOWY_TOKEN_POOL.splice(i, 1);
+        showyExtraSet(showyExtraGet().filter(function (x) { return x !== t; }));
+      } catch (e) {}
+    }
   };
 
   // подмешиваем токены, добытые ранее этим же устройством
@@ -4098,8 +4105,7 @@ function showSubscribePROModal() {
           success: function () { showyStatAdd('alive', t); },
           error: function () {
             showyStatAdd('dead');
-            var i = pool.indexOf(t);
-            if (i >= 0 && pool.length > 1) pool.splice(i, 1);
+            if (api.forget) api.forget(t);
           },
           complete: function () {
             if (--left <= 0) {
