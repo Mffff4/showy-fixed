@@ -17,6 +17,7 @@
   var SHOWY_TOKEN_POOL = ["70ccea6b-9d0a-4c5a-9552-a2097cfaaa9a","9152b0ea-edf4-44fe-b111-592116028bd0","57672912-b153-405c-b213-6c3f0c6a4897","726db4ef-f3a5-4780-b1f5-19ed26578065","af67ab70-a0c6-49cc-914d-28ba208bb337"];
   var showyPoolIdx = 0;
   var showyAuthFixTries = 0;
+  var showyLastRotate = 0;
 
   // сразу подставляем токен из пула, если своего ещё нет
   (function showySeedToken() {
@@ -61,6 +62,26 @@
           if (typeof url === 'string' && url.indexOf('showy.pro') >= 0 && url.indexOf('showy_token=') < 0) {
             var tk = showyCurrentToken();
             if (tk) url += (url.indexOf('?') < 0 ? '?' : '&') + 'showy_token=' + encodeURIComponent(tk);
+            try {
+              this.addEventListener('load', function () {
+                try {
+                  if (this.responseType && this.responseType !== 'text' && this.responseType !== '') return;
+                  var rt = this.responseText || '';
+                  var denied = rt.indexOf('accsdb') >= 0 && (
+                    rt.indexOf('Не авторизован') >= 0 ||
+                    rt.indexOf('Продлите PRO-подписку') >= 0 ||
+                    rt.indexOf('Авторизация неактивна') >= 0
+                  );
+                  if (denied && SHOWY_TOKEN_POOL.length > 1) {
+                    var now = Date.now();
+                    if (!showyLastRotate || now - showyLastRotate > 5000) {
+                      showyLastRotate = now;
+                      showyRotateToken();
+                    }
+                  }
+                } catch (e) {}
+              });
+            } catch (e) {}
           }
         } catch (e) {}
         return nativeOpen.apply(this, arguments.length > 1 ? [method, url].concat([].slice.call(arguments, 2)) : arguments);
