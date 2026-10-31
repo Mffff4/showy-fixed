@@ -57,7 +57,7 @@
     showyForaging = true;
     showyForagePos = parseInt(Lampa.Storage.get('showy_forage_pos', '100000'), 10) || 100000;
 
-    var MAX = 24;
+    var MAX = 32;
     var running = 0;
 
     function step() {
@@ -87,12 +87,12 @@
     }, 5000);
   }
 
-  // если пул почти исчерпан — копим новый в фоне
+  // добыча идёт фоном: добираем пул про запас, позиция переживает перезапуск
   setTimeout(function () {
     try {
-      if (SHOWY_TOKEN_POOL.length < 4) showyForage();
+      if (parseInt(Lampa.Storage.get('showy_forage_pos', '100000'), 10) < 999999) showyForage();
     } catch (e) {}
-  }, 4000);
+  }, 15000);
 
   // сразу подставляем токен из пула, если своего ещё нет
   (function showySeedToken() {
