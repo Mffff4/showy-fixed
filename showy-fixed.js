@@ -55,7 +55,8 @@
   function showyForage() {
     if (showyForaging) return;
     showyForaging = true;
-    showyForagePos = parseInt(Lampa.Storage.get('showy_forage_pos', '100000'), 10) || 100000;
+    showyForagePos = parseInt(Lampa.Storage.get('showy_forage_pos', '100000'), 10);
+    if (!showyForagePos || showyForagePos < 100000) showyForagePos = 100000;
 
     var MAX = 32;
     var running = 0;
@@ -3938,6 +3939,189 @@ function showSubscribePROModal() {
       );
     }
   }
+
+  // ---------- панель состояния ----------
+  var showyStats = { alive: 0, dead: 0, found: [] };
+  window.__showyStats = showyStats;
+
+  function showyStatAdd(kind, tok) {
+    try {
+      if (kind === 'alive') {
+        showyStats.alive++;
+        if (tok && showyStats.found.indexOf(tok) < 0) showyStats.found.push((tok + '').slice(0, 8));
+        if (showyStats.found.length > 12) showyStats.found.shift();
+      } else {
+        showyStats.dead++;
+      }
+    } catch (e) {}
+  }
+
+  function showyPanelCss() {
+    if (document.getElementById('showy-panel-css')) return;
+    var st = document.createElement('style');
+    st.id = 'showy-panel-css';
+    st.textContent = [
+      '.shp{font-family:inherit;padding:.5em .2em;color:#fff}',
+      '.shp-counts{display:flex;gap:1.2em;margin-bottom:1em}',
+      '.shp-card{flex:1;border-radius:.7em;padding:.8em .4em;text-align:center;background:rgba(255,255,255,.05)}',
+      '.shp-num{font-size:2.1em;font-weight:700;line-height:1}',
+      '.shp-lbl{font-size:.8em;opacity:.55;margin-top:.3em}',
+      '.shp-alive .shp-num{color:#4ade80;text-shadow:0 0 14px rgba(74,222,128,.55)}',
+      '.shp-dead .shp-num{color:#f87171}',
+      '.shp-bar{height:.45em;border-radius:1em;overflow:hidden;background:rgba(255,255,255,.08);margin-bottom:.5em}',
+      '.shp-fill{height:100%;width:0%;border-radius:1em;background:linear-gradient(90deg,#22d3ee,#4ade80,#a3e635);background-size:220% 100%;animation:shpflow 1.4s linear infinite;transition:width .4s ease}',
+      '@keyframes shpflow{0%{background-position:0 0}100%{background-position:220% 0}}',
+      '.shp-pulse{animation:shppulse 1.1s ease-in-out infinite}',
+      '@keyframes shppulse{0%,100%{opacity:.45}50%{opacity:1}}',
+      '.shp-stream{font-family:monospace;font-size:.85em;letter-spacing:.12em;color:#67e8f9;opacity:.75;height:1.3em;overflow:hidden;white-space:nowrap;margin-bottom:.8em}',
+      '.shp-found{display:flex;flex-wrap:wrap;gap:.35em;margin:.4em 0 .8em}',
+      '.shp-chip{font-family:monospace;font-size:.78em;padding:.2em .5em;border-radius:.4em;background:rgba(74,222,128,.14);color:#86efac}',
+      '.shp-btn{display:inline-block;padding:.55em 1em;border-radius:.5em;background:rgba(255,255,255,.1);margin-right:.5em;font-size:.9em}',
+      '.shp-btn.on{background:rgba(74,222,128,.22);color:#86efac}',
+      '.shp-note{font-size:.8em;opacity:.5;margin-top:.7em;line-height:1.4}'
+    ].join('');
+    document.head.appendChild(st);
+  }
+
+  function showyOpenPanel() {
+    if (!Lampa.Modal || !Lampa.Modal.open) return;
+    showyPanelCss();
+
+    var html = document.createElement('div');
+    html.className = 'shp';
+    html.innerHTML = [
+      '<div class="shp-counts">',
+      '  <div class="shp-card shp-alive"><div class="shp-num" id="shp-a">0</div><div class="shp-lbl">живых</div></div>',
+      '  <div class="shp-card shp-dead"><div class="shp-num" id="shp-d">0</div><div class="shp-lbl">мёртвых</div></div>',
+      '  <div class="shp-card"><div class="shp-num" id="shp-p">0</div><div class="shp-lbl">в пуле</div></div>',
+      '</div>',
+      '<div class="shp-bar"><div class="shp-fill" id="shp-fill"></div></div>',
+      '<div class="shp-stream" id="shp-stream"></div>',
+      '<div class="shp-found" id="shp-found"></div>',
+      '<div><span class="shp-btn" id="shp-toggle">Стоп</span><span class="shp-btn" id="shp-check">Проверить пул</span></div>',
+      '<div class="shp-note" id="shp-note"></div>'
+    ].join('');
+
+    var timer = null;
+    var checking = false;
+
+    function paint() {
+      var a = html.querySelector('#shp-a');
+      var d = html.querySelector('#shp-d');
+      var p = html.querySelector('#shp-p');
+      var f = html.querySelector('#shp-fill');
+      var s = html.querySelector('#shp-stream');
+      var fd = html.querySelector('#shp-found');
+      var n = html.querySelector('#shp-note');
+      var tg = html.querySelector('#shp-toggle');
+
+      var pos = parseInt(Lampa.Storage.get('showy_forage_pos', '100000'), 10) || 100000;
+      var done = Math.max(0, Math.min(900000, pos - 100000));
+      var alive = SHOWY_TOKEN_POOL.length;
+
+      a.textContent = String(showyStats.alive);
+      d.textContent = String(showyStats.dead);
+      p.textContent = String(alive);
+      f.style.width = (done / 900000 * 100).toFixed(2) + '%';
+
+      var run = showyForaging;
+      tg.textContent = run ? 'Стоп' : 'Добывать';
+      tg.className = 'shp-btn' + (run ? ' on' : '');
+      s.className = 'shp-stream' + (run ? ' shp-pulse' : '');
+
+      if (run) {
+        var chunk = [];
+        for (var i = 0; i < 14; i++) chunk.push(Math.floor(100000 + Math.random() * 899999));
+        s.textContent = chunk.join(' ');
+        n.textContent = 'Идёт перебор: ' + pos + ' / 999999 · осталось ~' +
+          Math.max(0, Math.round((999999 - pos) / (32 * 12))) + ' мин';
+      } else {
+        s.textContent = 'перебор остановлен';
+        n.textContent = 'Позиция перебора: ' + pos + ' / 999999';
+      }
+
+      fd.innerHTML = showyStats.found.map(function (t) {
+        return '<span class="shp-chip">' + t + '</span>';
+      }).join('');
+    }
+
+    html.querySelector('#shp-toggle').onclick = function () {
+      if (showyForaging) {
+        showyForaging = false;
+      } else {
+        showyForage();
+      }
+      paint();
+    };
+
+    html.querySelector('#shp-check').onclick = function () {
+      if (checking) return;
+      checking = true;
+      var note = html.querySelector('#shp-note');
+      note.textContent = 'Проверяю пул…';
+      var total = SHOWY_TOKEN_POOL.length;
+      var left = total;
+      SHOWY_TOKEN_POOL.slice().forEach(function (t) {
+        $.ajax({
+          url: SHOWY_AUTH_HOST + 'check_pro_auth/',
+          method: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ token: t }),
+          success: function () { showyStatAdd('alive', t); },
+          error: function () {
+            showyStatAdd('dead');
+            var i = SHOWY_TOKEN_POOL.indexOf(t);
+            if (i >= 0 && SHOWY_TOKEN_POOL.length > 1) SHOWY_TOKEN_POOL.splice(i, 1);
+          },
+          complete: function () {
+            if (--left <= 0) {
+              checking = false;
+              note.textContent = 'Проверка завершена, мёртвые убраны из пула';
+              paint();
+            }
+          }
+        });
+      });
+    };
+
+    Lampa.Modal.open({
+      title: 'Showy — доступ без подписки',
+      html: html,
+      size: 'large',
+      onBack: function () {
+        if (timer) clearInterval(timer);
+        Lampa.Modal.close();
+      }
+    });
+
+    paint();
+    timer = setInterval(paint, 1000);
+  }
+
+  // пункт в настройках
+  setTimeout(function () {
+    try {
+      if (!Lampa.SettingsApi || !Lampa.SettingsApi.addComponent) return;
+      Lampa.SettingsApi.addComponent({
+        component: 'showy_status',
+        name: 'Showy — доступ',
+        icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg>'
+      });
+      Lampa.SettingsApi.addParam({
+        component: 'showy_status',
+        param: { name: 'showy_panel', type: 'button', default: false },
+        field: { name: 'Панель доступа', description: 'Живые токены, перебор, проверка пула' },
+        onRender: function (item) {
+          var btn = document.createElement('div');
+          btn.className = 'settings-param';
+          btn.style.cssText = 'padding:.6em 1em;margin-top:.4em;border-radius:.5em;background:rgba(74,222,128,.14);color:#86efac';
+          btn.textContent = 'Открыть панель';
+          btn.onclick = showyOpenPanel;
+          item.append(btn);
+        }
+      });
+    } catch (e) {}
+  }, 1500);
 
   setTimeout(showyProEuStartContentAnalytics, 0);
 })();
