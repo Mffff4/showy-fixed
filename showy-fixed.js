@@ -4046,7 +4046,7 @@ function showSubscribePROModal() {
         s.textContent = chunk.join(' ');
         if (!checking) {
           n.textContent = 'Идёт перебор: ' + pos + ' / 999999 · осталось ~' +
-            Math.max(0, Math.round((999999 - pos) / (32 * 12))) + ' мин';
+            Math.max(0, Math.round((999999 - pos) / 2000)) + ' мин';
         }
       } else {
         s.textContent = 'перебор остановлен';
