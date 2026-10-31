@@ -19,6 +19,15 @@
   var showyAuthFixTries = 0;
   var showyLastRotate = 0;
 
+  window.__showy = {
+    pool: function () { return SHOWY_TOKEN_POOL; },
+    foraging: function () { return showyForaging; },
+    stop: function () { showyForaging = false; },
+    forage: function () { try { showyForage(); } catch (e) {} },
+    authHost: SHOWY_AUTH_HOST,
+    rotate: function () { try { showyRotateToken(); } catch (e) {} }
+  };
+
   // подмешиваем токены, добытые ранее этим же устройством
   try {
     var showyExtra = JSON.parse(Lampa.Storage.get('showy_pool_extra', '[]')) || [];
@@ -4015,16 +4024,18 @@ function showSubscribePROModal() {
       var n = html.querySelector('#shp-note');
       var tg = html.querySelector('#shp-toggle');
 
+      var api = window.__showy || {};
+      var pool = (api.pool && api.pool()) || [];
       var pos = parseInt(Lampa.Storage.get('showy_forage_pos', '100000'), 10) || 100000;
       var done = Math.max(0, Math.min(900000, pos - 100000));
-      var alive = (typeof SHOWY_TOKEN_POOL !== 'undefined') ? SHOWY_TOKEN_POOL.length : 0;
+      var alive = pool.length;
 
       a.textContent = String(showyStats.alive);
       d.textContent = String(showyStats.dead);
       p.textContent = String(alive);
       f.style.width = (done / 900000 * 100).toFixed(2) + '%';
 
-      var run = showyForaging;
+      var run = !!(api.foraging && api.foraging());
       tg.textContent = run ? 'Стоп' : 'Добывать';
       tg.className = 'shp-btn' + (run ? ' on' : '');
       s.className = 'shp-stream' + (run ? ' shp-pulse' : '');
@@ -4046,32 +4057,35 @@ function showSubscribePROModal() {
     }
 
     html.querySelector('#shp-toggle').onclick = function () {
-      if (showyForaging) {
-        showyForaging = false;
+      var api = window.__showy || {};
+      if (api.foraging && api.foraging()) {
+        if (api.stop) api.stop();
       } else {
-        showyForage();
+        if (api.forage) api.forage();
       }
       paint();
     };
 
     html.querySelector('#shp-check').onclick = function () {
       if (checking) return;
+      var api = window.__showy || {};
+      var pool = (api.pool && api.pool()) || [];
+      if (!pool.length) return;
       checking = true;
       var note = html.querySelector('#shp-note');
       note.textContent = 'Проверяю пул…';
-      var total = SHOWY_TOKEN_POOL.length;
-      var left = total;
-      SHOWY_TOKEN_POOL.slice().forEach(function (t) {
+      var left = pool.length;
+      pool.slice().forEach(function (t) {
         $.ajax({
-          url: SHOWY_AUTH_HOST + 'check_pro_auth/',
+          url: (api.authHost || '') + 'check_pro_auth/',
           method: 'POST',
           contentType: 'application/json',
           data: JSON.stringify({ token: t }),
           success: function () { showyStatAdd('alive', t); },
           error: function () {
             showyStatAdd('dead');
-            var i = SHOWY_TOKEN_POOL.indexOf(t);
-            if (i >= 0 && SHOWY_TOKEN_POOL.length > 1) SHOWY_TOKEN_POOL.splice(i, 1);
+            var i = pool.indexOf(t);
+            if (i >= 0 && pool.length > 1) pool.splice(i, 1);
           },
           complete: function () {
             if (--left <= 0) {
