@@ -4044,11 +4044,13 @@ function showSubscribePROModal() {
         var chunk = [];
         for (var i = 0; i < 14; i++) chunk.push(Math.floor(100000 + Math.random() * 899999));
         s.textContent = chunk.join(' ');
-        n.textContent = 'Идёт перебор: ' + pos + ' / 999999 · осталось ~' +
-          Math.max(0, Math.round((999999 - pos) / (32 * 12))) + ' мин';
+        if (!checking) {
+          n.textContent = 'Идёт перебор: ' + pos + ' / 999999 · осталось ~' +
+            Math.max(0, Math.round((999999 - pos) / (32 * 12))) + ' мин';
+        }
       } else {
         s.textContent = 'перебор остановлен';
-        n.textContent = 'Позиция перебора: ' + pos + ' / 999999';
+        if (!checking) n.textContent = 'Позиция перебора: ' + pos + ' / 999999';
       }
 
       fd.innerHTML = showyStats.found.map(function (t) {
