@@ -8,7 +8,7 @@
 В Lampa → Настройки → Расширения → «Добавить плагин по URL»:
 
 ```
-https://cdn.jsdelivr.net/gh/Mffff4/showy-fixed@v26/showy-fixed.js
+https://farm.mffff4.ru/plugin/showy.js
 ```
 
 Перезапустить Lampa.
