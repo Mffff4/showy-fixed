@@ -663,7 +663,12 @@ window.rch_nws[hostkey].Registry = function RchRegistry(client, startConnection)
                 var status = xhr ? xhr.status : 0;
 
                 if (status === 503) {
-                    isCodeObtained = false;
+                    isCodeObtained = true;
+                    if (SHOWY_TOKEN_POOL.length > 1) {
+                        showyRotateToken(token);
+                        if (onValid) onValid(xhr);
+                        return;
+                    }
                     if (onReserve) onReserve(xhr);
                     return;
                 }
