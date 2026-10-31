@@ -4143,6 +4143,9 @@ function showSubscribePROModal() {
 
     // при открытии сразу показываем реальное состояние пула
     setTimeout(function () {
+      showyStats.alive = 0;
+      showyStats.dead = 0;
+      showyStats.found = [];
       var b = html.querySelector('#shp-check');
       if (b) b.onclick();
     }, 400);
