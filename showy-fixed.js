@@ -43,6 +43,39 @@
     if (window.console && console.log) console.log('Showy: токен ротирован');
     return next;
   }
+  // перехват всех запросов к источнику: гарантируем showy_token
+  (function showyHookTransport() {
+    try {
+      var nativeOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (method, url) {
+        try {
+          if (typeof url === 'string' && url.indexOf('showy.pro') >= 0 && url.indexOf('showy_token=') < 0) {
+            var tk = showyCurrentToken();
+            if (tk) url += (url.indexOf('?') < 0 ? '?' : '&') + 'showy_token=' + encodeURIComponent(tk);
+          }
+        } catch (e) {}
+        return nativeOpen.apply(this, arguments.length > 1 ? [method, url].concat([].slice.call(arguments, 2)) : arguments);
+      };
+
+      if (window.fetch) {
+        var nativeFetch = window.fetch;
+        window.fetch = function (input, init) {
+          try {
+            var u = (typeof input === 'string') ? input : (input && input.url);
+            if (u && u.indexOf('showy.pro') >= 0 && u.indexOf('showy_token=') < 0) {
+              var tk2 = showyCurrentToken();
+              if (tk2) {
+                var nu = u + (u.indexOf('?') < 0 ? '?' : '&') + 'showy_token=' + encodeURIComponent(tk2);
+                input = (typeof input === 'string') ? nu : new Request(nu, input);
+              }
+            }
+          } catch (e) {}
+          return nativeFetch.call(this, input, init);
+        };
+      }
+    } catch (e) {}
+  })();
+
   // сразу подставляем токен из пула, если своего ещё нет
   (function showySeedToken() {
     try {
