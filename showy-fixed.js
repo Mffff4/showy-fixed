@@ -4086,7 +4086,7 @@ function showSubscribePROModal() {
 
     Lampa.Modal.open({
       title: 'Showy — доступ без подписки',
-      html: html,
+      html: $(html),
       size: 'large',
       onBack: function () {
         if (timer) clearInterval(timer);
