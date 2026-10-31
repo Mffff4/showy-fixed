@@ -4017,7 +4017,7 @@ function showSubscribePROModal() {
 
       var pos = parseInt(Lampa.Storage.get('showy_forage_pos', '100000'), 10) || 100000;
       var done = Math.max(0, Math.min(900000, pos - 100000));
-      var alive = SHOWY_TOKEN_POOL.length;
+      var alive = (typeof SHOWY_TOKEN_POOL !== 'undefined') ? SHOWY_TOKEN_POOL.length : 0;
 
       a.textContent = String(showyStats.alive);
       d.textContent = String(showyStats.dead);
