@@ -31,8 +31,7 @@
 
   // подмешиваем токены, добытые ранее этим же устройством
   try {
-    var showyExtra = JSON.parse(Lampa.Storage.get('showy_pool_extra', '[]')) || [];
-    showyExtra.forEach(function (t) {
+    showyExtraGet().forEach(function (t) {
       if (t && SHOWY_TOKEN_POOL.indexOf(t) < 0) SHOWY_TOKEN_POOL.push(t);
     });
   } catch (e) {}
@@ -40,6 +39,16 @@
   // автодобыча токенов: сервер отдаёт CORS *, коды шестизначные
   var showyForaging = false;
   var showyForagePos = 0;
+
+  function showyExtraGet() {
+    var v = Lampa.Storage.get('showy_pool_extra', '[]');
+    if (Array.isArray(v)) return v.slice();
+    try { return JSON.parse(v) || []; } catch (e) { return []; }
+  }
+
+  function showyExtraSet(arr) {
+    try { Lampa.Storage.set('showy_pool_extra', JSON.stringify(arr)); } catch (e) {}
+  }
 
   function showyVerifyToken(tok) {
     $.ajax({
@@ -51,9 +60,8 @@
         if (SHOWY_TOKEN_POOL.indexOf(tok) < 0) {
           SHOWY_TOKEN_POOL.push(tok);
           try {
-            var ex = JSON.parse(Lampa.Storage.get('showy_pool_extra', '[]')) || [];
-            ex.push(tok);
-            Lampa.Storage.set('showy_pool_extra', JSON.stringify(ex));
+            var ex = showyExtraGet();
+            if (ex.indexOf(tok) < 0) { ex.push(tok); showyExtraSet(ex); }
           } catch (e) {}
           if (!Lampa.Storage.get('showy_token')) Lampa.Storage.set('showy_token', tok);
           if (window.console && console.log) console.log('Showy: добыт живой токен');
