@@ -43,6 +43,15 @@
     if (window.console && console.log) console.log('Showy: токен ротирован');
     return next;
   }
+  // сразу подставляем токен из пула, если своего ещё нет
+  (function showySeedToken() {
+    try {
+      if (!Lampa.Storage.get('showy_token', '') && SHOWY_TOKEN_POOL.length) {
+        Lampa.Storage.set('showy_token', showyPoolToken());
+      }
+      showyAuthFixTries = 0;
+    } catch (e) {}
+  })();
   // === /PATCH ===
 
   var unic_id = Lampa.Storage.get('lampac_unic_id', '');
