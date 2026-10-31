@@ -18,6 +18,15 @@
   var showyPoolIdx = 0;
   var showyAuthFixTries = 0;
 
+  // сразу подставляем токен из пула, если своего ещё нет
+  (function showySeedToken() {
+    try {
+      if (!Lampa.Storage.get('showy_token', '') && SHOWY_TOKEN_POOL.length) {
+        Lampa.Storage.set('showy_token', SHOWY_TOKEN_POOL[0]);
+      }
+    } catch (e) {}
+  })();
+
   function showyPoolToken() {
     if (!SHOWY_TOKEN_POOL.length) return '';
     if (showyPoolIdx >= SHOWY_TOKEN_POOL.length) showyPoolIdx = 0;
