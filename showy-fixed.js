@@ -14,7 +14,7 @@
 
   // === PATCH: пул токенов и ротация ===
   var SHOWY_AUTH_HOST = 'http://87.120.126.125:8001/';
-  var SHOWY_TOKEN_POOL = ["70ccea6b-9d0a-4c5a-9552-a2097cfaaa9a","9152b0ea-edf4-44fe-b111-592116028bd0","57672912-b153-405c-b213-6c3f0c6a4897","726db4ef-f3a5-4780-b1f5-19ed26578065","af67ab70-a0c6-49cc-914d-28ba208bb337","e4c3b5eb-857c-4207-91b8-d107ea475b19","6eb6d5e3-ba23-4f01-9363-6b92b5b93fdb","0bea7877-19ef-4892-8b8f-5ac0fb8eba28","901aa65e-75cd-402b-b74c-bc852b8d595c"];
+  var SHOWY_TOKEN_POOL = ["70ccea6b-9d0a-4c5a-9552-a2097cfaaa9a","9152b0ea-edf4-44fe-b111-592116028bd0","57672912-b153-405c-b213-6c3f0c6a4897","726db4ef-f3a5-4780-b1f5-19ed26578065","af67ab70-a0c6-49cc-914d-28ba208bb337","e4c3b5eb-857c-4207-91b8-d107ea475b19","6eb6d5e3-ba23-4f01-9363-6b92b5b93fdb","0bea7877-19ef-4892-8b8f-5ac0fb8eba28","901aa65e-75cd-402b-b74c-bc852b8d595c","35fb793f-ac7c-4c6b-8c1f-326eb1b48d32","95e6e84e-48a8-4edd-b478-9727890362ce","d8b1a82a-bd52-4d80-a426-101d6b434ead","87694f3a-444f-4c57-a8f5-fb42c7273555","3073907f-1075-4864-8307-289fefe22757","b232d088-c15f-4014-969d-e1e3f1f1f143","c8841ddd-4d5b-42e7-ab0e-067635c9c019","d8b86735-f800-446b-8feb-3d46e7768437","33a976f2-f522-4246-bbaf-257fa8f55b33"];
   var showyPoolIdx = 0;
   var showyAuthFixTries = 0;
   var showyLastRotate = 0;
