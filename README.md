@@ -8,7 +8,7 @@
 В Lampa → Настройки → Расширения → «Добавить плагин по URL»:
 
 ```
-https://cdn.jsdelivr.net/gh/Mffff4/showy-fixed@main/showy-fixed.js
+https://cdn.jsdelivr.net/gh/Mffff4/showy-fixed@v1/showy-fixed.js
 ```
 
 Перезапустить Lampa.
@@ -23,6 +23,18 @@ https://cdn.jsdelivr.net/gh/Mffff4/showy-fixed@main/showy-fixed.js
   (до 3 попыток), вместо модалки оплаты
 - `showyVerifyProAuth`: статусы 400/401/403/404/409/422 больше не считаются
   фатальными — управление всё равно уходит в `onValid`
+
+## Если все токены в пуле истекли
+
+Коды активации шестизначные и проверяются без ограничения частоты — рабочий токен
+можно добыть перебором за ~1 час:
+
+```
+python brute_codes.py      # диапазон 100000-999999, только активные токены
+```
+
+Скрипт пишет найденные активные токены в `found.json`. Их нужно вписать в
+`SHOWY_TOKEN_POOL` в `showy-fixed.js` и выложить заново.
 
 ## Файлы
 
