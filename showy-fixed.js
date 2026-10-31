@@ -14,7 +14,7 @@
 
   // === PATCH: пул токенов и ротация ===
   var SHOWY_AUTH_HOST = 'http://87.120.126.125:8001/';
-  var SHOWY_TOKEN_POOL = ["70ccea6b-9d0a-4c5a-9552-a2097cfaaa9a","9152b0ea-edf4-44fe-b111-592116028bd0","57672912-b153-405c-b213-6c3f0c6a4897"];
+  var SHOWY_TOKEN_POOL = ["70ccea6b-9d0a-4c5a-9552-a2097cfaaa9a","9152b0ea-edf4-44fe-b111-592116028bd0","57672912-b153-405c-b213-6c3f0c6a4897","726db4ef-f3a5-4780-b1f5-19ed26578065","af67ab70-a0c6-49cc-914d-28ba208bb337"];
   var showyPoolIdx = 0;
   var showyAuthFixTries = 0;
 
