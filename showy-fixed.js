@@ -25,6 +25,7 @@
     stop: function () { showyForaging = false; },
     forage: function () { try { showyForage(); } catch (e) {} },
     authHost: SHOWY_AUTH_HOST,
+    verify: function (t) { try { showyVerifyToken(t); } catch (e) { if (window.console) console.log('verify err', e); } },
     rotate: function () { try { showyRotateToken(); } catch (e) {} }
   };
 
