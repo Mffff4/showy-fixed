@@ -4018,7 +4018,8 @@ function showSubscribePROModal() {
       '<div class="shp-bar"><div class="shp-fill" id="shp-fill"></div></div>',
       '<div class="shp-stream" id="shp-stream"></div>',
       '<div class="shp-found" id="shp-found"></div>',
-      '<div><span class="shp-btn" id="shp-toggle">Стоп</span><span class="shp-btn" id="shp-check">Проверить пул</span></div>',
+      '<div><span class="shp-btn" id="shp-toggle">Стоп</span><span class="shp-btn" id="shp-check">Проверить пул</span><span class="shp-btn" id="shp-diag">Диагностика</span></div>',
+      '<div class="shp-note" id="shp-diag-out"></div>',
       '<div class="shp-note" id="shp-note"></div>'
     ].join('');
 
@@ -4109,6 +4110,22 @@ function showSubscribePROModal() {
           }
         });
       });
+    };
+
+    html.querySelector('#shp-diag').onclick = function () {
+      var out = html.querySelector('#shp-diag-out');
+      var api = window.__showy || {};
+      var t0 = Date.now();
+      out.textContent = 'Проверяю кнопку…';
+      if (!api.ensure) { out.textContent = 'Модуль не загружен — плагин не стартовал'; return; }
+      api.ensure(function () {
+        var sec = ((Date.now() - t0) / 1000).toFixed(1);
+        var tk = Lampa.Storage.get('showy_token', '');
+        out.textContent = 'Кнопка рабочая · ответ ' + sec + ' с · токен ' + (tk ? tk.slice(0, 8) : 'нет');
+      });
+      setTimeout(function () {
+        if (out.textContent === 'Проверяю кнопку…') out.textContent = 'Нет ответа — кнопка не пройдёт';
+      }, 12000);
     };
 
     Lampa.Modal.open({
